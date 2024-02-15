@@ -1,24 +1,28 @@
 # Use an official CUDA runtime as a parent image
-FROM nvidia/cuda:12.3.1-base-ubuntu20.04
+FROM nvidia/cuda:12.3.1-devel-ubuntu20.04
+
 # Set the working directory in the container
 WORKDIR /usr/src/app
 
-# Install wget and bzip2
-RUN apt-get update && apt-get install -y wget bzip2
+# Install system packages
+RUN apt-get update && apt-get install -y \
+    wget \
+    bzip2 \
+    python3-pip \
+    python3-dev && \
+    rm -rf /var/lib/apt/lists/*
 
-# Download and install Anaconda
-RUN wget https://repo.anaconda.com/archive/Anaconda3-2020.02-Linux-x86_64.sh && \
-    bash Anaconda3-2020.02-Linux-x86_64.sh -b -p /opt/conda && \
-    rm Anaconda3-2020.02-Linux-x86_64.sh
+# Upgrade pip and setuptools
+RUN pip3 install --upgrade pip setuptools
 
-# Add Anaconda to PATH
-ENV PATH /opt/conda/bin:$PATH
+# Install the latest PyTorch with CUDA support compatible with the system's CUDA
+RUN pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
 
-# Install PyTorch with CUDA support
-RUN conda install pytorch torchvision cudatoolkit=11.0 -c pytorch
+# Note: Adjust the --extra-index-url to match the CUDA version available in your Docker image if necessary.
+# This example uses cu113 for CUDA 11.3. Adjust according to your CUDA version, e.g., cu123 for CUDA 12.3 if available.
 
 # Install Jupyter Notebook
-RUN conda install -c conda-forge notebook
+RUN pip3 install notebook
 
 # Make port 8888 available to the world outside this container
 EXPOSE 8888
